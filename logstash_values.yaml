@@ -45,7 +45,6 @@ logstashPipeline:
           "Accept" => "application/json"
         }
         format => "message"
-        # Peut etre ajouter un tag de localisation
         message => "sensors,site=%{siteid},sensor=%{mysensor} %{mymetric}=%{value} %{unix_timestamp}000000000"
       }
     }

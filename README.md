@@ -8,7 +8,7 @@ Features:
 - easily deployed in cloud or edge environments
 - scalable
 - fast sensors to cloud deployment
-- supports multiple input protocols (see : https://www.elastic.co/guide/en/logstash/current/input-plugins.html)
+- supports multiple input / outputs protocols (see : https://www.elastic.co/guide/en/logstash/current/input-plugins.html)
 
 ## Configuration
 Don't forget to change user, password and token inside *influxdb_values.yaml* file:
@@ -65,12 +65,13 @@ bash install.sh
 Download mosquitto client and execute : 
 
 ```
-mosquitto_pub -h "10.30.50.201" -t "sensors/maison2/chambre1/humidity" -m "45" -p 31111
+mosquitto_pub -h "10.30.50.201" -t "sensors/house2/bedroom1/humidity" -m "45" -p 31111
 ```
-- maison2: is the site
-- chambre1: the sensor name
+
+- house2: is the site
+- bedroom1: the sensor name
 - humidity: the measurement
 
-To see the data, connect to MY_INFLUXDB_HOST with adminUser.user and adminUser.password from influxdb_values.yaml
+To see the data, connect to MY_INFLUXDB_HOST with **adminUser.user** and **adminUser.password** from *influxdb_values.yaml*
 
-Click on Data Explorer, select sensors in FROM, then sensors in _measurement, then the metric type (humidity, temperature,...). Then you can fileter with site or sensor value.
+Click on Data Explorer, select *sensors* in **FROM**, then *sensors* in **_measurement**, then the metric type (humidity, temperature,...). Then you can filter with site or sensor value.
