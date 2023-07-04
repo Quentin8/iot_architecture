@@ -1,0 +1,42 @@
+---
+daemonset:
+  enabled: false
+deployment:
+  # Annotations to apply to the daemonset
+  annotations: {}
+  # additionals labels
+  labels: {}
+  # Include the daemonset
+  enabled: true
+  # Allows you to add any config files in /usr/share/filebeat
+  # such as filebeat.yml for daemonset
+  filebeatConfig:
+    filebeat.yml: |
+      filebeat.config:
+        modules:
+          path: ${path.config}/modules.d/*.yml
+          reload.enabled: false
+        
+      filebeat.inputs:
+      - type: mqtt
+        hosts: 
+          - vernemqtest.default.svc.cluster.local:1883
+          # - tcp://vernemqtest.default.svc.cluster.local:31111
+        topics: 
+          - sensors/# # listens to root topic and all subtopics
+      output.logstash:
+        hosts: 
+          - logstashtest.default.svc.cluster.local:5000
+  # Only used when updateStrategy is set to "RollingUpdate"
+  nodeSelector: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "100Mi"
+    limits:
+      cpu: "1000m"
+      memory: "200Mi"
+  tolerations: []
+  secretMounts: []
+  extraEnvs: []
+  replicas: 1
