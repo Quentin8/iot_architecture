@@ -1,0 +1,97 @@
+---
+replicas: 1
+
+# Allows you to add any pipeline files in /usr/share/logstash/pipeline/
+### ***warn*** there is a hardcoded logstash.conf in the image, override it first
+logstashPipeline:
+  mqtt.conf: |
+    input {
+      beats {
+        port => 5000
+      }
+    }
+
+    filter {
+      json {
+        source => "message"
+        target => "parsed_payload"
+      }
+      # use ruby code to convert datetime to unix timestamp
+      ruby {
+        code => "event.set('unix_timestamp', event.get('@timestamp').time.to_i)"
+      }
+      # extracts the content inside the string : sensors/here/and_here
+      grok {
+        match => { "[mqtt][topic]" => "sensors/%{WORD:siteid}/%{WORD:mysensor}/%{WORD:mymetric}" }
+      }
+      mutate {
+        # add_field => {
+        #   "sensorid" => "%{[parsed_payload][sensorId]}"
+          # "value" => "%{[parsed_payload][value]}"
+        # }
+        rename => {"message" => "value"}
+        remove_field => ["parsed_payload", "mqtt", "tags", "event", "ecs", "agent", "input", "host", "@version"]
+      }
+    }
+
+    output{
+      stdout{}
+      http {
+        url => "http://influxdb.10.30.50.201.nip.io/api/v2/write?org=influxdata&bucket=sensors&precision=ns"
+        http_method => "post"
+        headers => {
+          "Authorization" => "Token CHANGEME" 
+          "Content-Type" => "text/plain; charset=utf-8"
+          "Accept" => "application/json"
+        }
+        format => "message"
+        message => "sensors,site=%{siteid},sensor=%{mysensor} %{mymetric}=%{value} %{unix_timestamp}000000000"
+      }
+    }
+
+
+# resources:
+#   requests:
+#     cpu: "100m"
+#     # memory: "1536Mi"
+#     memory: "300Mi"
+#   limits:
+#     cpu: "300m"
+#     memory: "500Mi"
+
+
+httpPort: 9600
+
+# Custom ports to add to logstash
+extraPorts:
+  - name: beats
+    containerPort: 5000
+
+fullnameOverride: logstashtest
+
+service:
+  annotations: {}
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: logstashtest
+  ports:
+    - name: beats
+      port: 5000
+      protocol: TCP
+      targetPort: 5000
+      nodePort: 31200
+
+# ingress:
+#   enabled: true
+#   annotations:
+#     {}
+#     # kubernetes.io/tls-acme: "true"
+#   className: "traefik"
+#   pathtype: ImplementationSpecific
+#   hosts:
+#     - host: localhost
+#       paths:
+#         - path: /beats
+#           servicePort: 5044
+#         - path: /http
+#           servicePort: 8080
